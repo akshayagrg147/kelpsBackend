@@ -277,7 +277,7 @@ def sub_catproduct_info_logic(data):
                     final_response.append(response)
             
         else:
-            products_obj = TblProducts.objects.filter(product_sub_category = sub_catid).all()
+            products_obj = TblProducts.objects.all()
             
             if products_obj:
                 for obj in products_obj:
