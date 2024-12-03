@@ -15,7 +15,10 @@ SECRET_KEY = 'django-insecure-!dy6n+^!=4qss+4@5_sd-v+38n5r-a6-(1)4@g960%*hf8s5(7
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    'ec2-13-201-20-227.ap-south-1.compute.amazonaws.com',
+    'localhost'
+]
 
 
 # Application definition
@@ -27,6 +30,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
+    'corsheaders',
     'login',
     'home_screen',
     'order',
@@ -34,6 +39,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -44,6 +50,17 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'health_care.urls'
+
+CORS_ORIGIN_ALLOW_ALL = True 
+
+CORS_ALLOW_CREDENTIALS = True
+
+CORS_ALLOW_HEADERS = list(default_headers) + [
+    'access-control-allow-origin',
+    'access-control-allow-methods',
+    'access-control-allow-headers',
+    'access-control-allow-credentials',
+]
 
 TEMPLATES = [
     {
