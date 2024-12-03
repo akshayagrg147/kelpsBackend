@@ -12,6 +12,6 @@ urlpatterns = [
     path('address', views.address_operation),
     path('search', views.search_functionality),
     # path('photo_upload', views.upload_image),  
-    path('category_info/', views.Category_info),
+    path('category_info', views.Category_info),
     path('start_stop', views.start_stop)   
 ]

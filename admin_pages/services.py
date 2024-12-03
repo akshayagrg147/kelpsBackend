@@ -146,7 +146,6 @@ def delete_category(data):
             raise Exception("Category id is none")
         
         global_cat_obj = TblCategories.objects.filter(categories_name = "Global").first()
-        global_sub_obj = TblSubcategories.objects.filter(subcategories_name = "Global").first()
         
         category_object = TblCategories.objects.filter(id = category_id).first()
         
@@ -380,10 +379,8 @@ def get_orgs(data):
                         "state"             : orgs.state.state_name if orgs.state else '',
                         "district_id"       : orgs.district.id if orgs.district else '',
                         "district"          : orgs.district.district_name if orgs.district else '',
-                        "category_id"       : orgs.sub.category.id if orgs.sub and orgs.sub.category else '',
-                        "category_name"     : orgs.sub.category.categories_name if orgs.sub and orgs.sub.category else ''
-                        # "sub_category_id"   : orgs.sub.id if orgs.sub else '',
-                        # "sub_category_name" : orgs.sub.subcategories_name if orgs.sub else ''
+                        "category_id"       : orgs.category.id if orgs.category else '',
+                        "category_name"     : orgs.category.categories_name if orgs.category else ''
                     }
             
             final_response.append(response)
@@ -407,6 +404,7 @@ def add_orgs(data):
                 organization_name = obj.get('name')
                 state = obj.get('state')
                 district = obj.get('district')
+                category = obj.get('category')
                 image = obj.get('image')
                 
                 try:
@@ -416,9 +414,12 @@ def add_orgs(data):
                         state_obj = TblState.objects.filter(id = state).first()
                     if district:
                         district_obj = TblDistrict.objects.filter(id = district).first()
+                    if category:
+                        category_obj = TblCategories.objects.filter(id = category).first()
+                        
                     organization_obj = TblOrganization(org_name = organization_name,
                                                                     state = state_obj,
-                                                                    district = district_obj)
+                                                                    district = district_obj, category = category_obj, image = image)
                         
                     organization_obj.save()
                     
@@ -430,8 +431,8 @@ def add_orgs(data):
                         "state"             : organization_obj.state.state_name if organization_obj.state else '',
                         "district_id"       : organization_obj.district.id if organization_obj.district else '',
                         "district"          : organization_obj.district.district_name if organization_obj.district else '',
-                        "category_id"       : organization_obj.sub.category.id if organization_obj.sub and organization_obj.sub.category else '',
-                        "category_name"     : organization_obj.sub.category.categories_name if organization_obj.sub and organization_obj.sub.category else ''
+                        "category_id"       : organization_obj.category.id if organization_obj.category else '',
+                        "category_name"     : organization_obj.category.categories_name if organization_obj.category else ''
                         # "sub_category_id"   : organization_obj.sub.id if organization_obj.sub else '',
                         # "sub_category_name" : organization_obj.sub.subcategories_name if organization_obj.sub else ''
                     }
@@ -505,8 +506,8 @@ def update_orgs(data):
                     "state"             : organization_obj.state.state_name if organization_obj.state else '',
                     "district_id"       : organization_obj.district.id if organization_obj.district else '',
                     "district"          : organization_obj.district.district_name if organization_obj.district else '',
-                    "category_id"       : organization_obj.sub.category.id if organization_obj.sub and organization_obj.sub.category else '',
-                    "category_name"     : organization_obj.sub.category.categories_name if organization_obj.sub and organization_obj.sub.category else '',
+                    "category_id"       : organization_obj.category.id if organization_obj.category else '',
+                    "category_name"     : organization_obj.category.categories_name if organization_obj.category else '',
                     # "sub_category_id"   : organization_obj.sub.id if organization_obj.sub else '',
                     # "sub_category_name" : organization_obj.sub.subcategories_name if organization_obj.sub else ''
                 }
@@ -638,10 +639,6 @@ def add_products(user_id, data):
                     category_object     = TblCategories.objects.filter(id=product_category).first()
                     if not category_object:
                         raise Exception(f"category not available as id {product_category}")
-                    
-                    sub_category_object = TblSubcategories.objects.filter(id=product_sub_category).first()
-                    if not sub_category_object:
-                        raise Exception(f"sub_category not available as id {product_sub_category}")
                 
                 
                 if not product_category:
@@ -960,9 +957,9 @@ def product_search_logic(data):
                 response['organization_id'] = product.__dict__['organization_id']
                 response['organization_name'] = product.organization.org_name
                 response['district_id'] = product.organization.district_id
-                response['district_name'] = product.organization.district.district_name
+                response['district_name'] = product.organization.district.district_name if product.organization.district_id else ''
                 response['state_id'] = product.organization.state_id
-                response['state_name'] = product.organization.state.state_name
+                response['state_name'] = product.organization.state.state_name if product.organization.state else None
             
             final_response.append(response)
             

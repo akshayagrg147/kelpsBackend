@@ -35,8 +35,7 @@ def home_screen_logic(user_id = None, category_id = None, flag = 'external'):
             category = {
                 "id"            : categories.id,
                 "name"          : categories.categories_name,
-                "img"           : categories.image,
-                "sub_categories": handle_sub_categories(categories.id)
+                "img"           : categories.image
             }
             
             categories_info.append(category)
@@ -111,8 +110,6 @@ def handle_product_info(cat_id = None):
                 "product_name"          : obj.__dict__['product_name'],
                 "product_category_id"      : obj.product_category.id if obj.product_category else '',
                 "product_category"      : obj.product_category.categories_name if obj.product_category else '',
-                "product_sub_category_id"  : obj.product_sub_category.id if obj.product_sub_category else '',
-                "product_sub_category"  : obj.product_sub_category.subcategories_name if obj.product_sub_category else '',
                 "product_organization_id"  : obj.organization.id if obj.organization else '',
                 "product_organization"  : obj.organization.org_name if obj.organization else '',
                 "size_available"        : json.loads(size_dict),
@@ -138,7 +135,7 @@ def product_info_logic(product_id, flag = None):
         product_obj = TblProducts.objects.filter(id = int(product_id)).first()
         
         if product_obj:
-            related_products_objs = TblProducts.objects.filter(product_sub_category_id = product_obj.product_sub_category_id).all()
+            related_products_objs = TblProducts.objects.filter(product_category = product_obj.product_category).all()
             related_products = []
             if flag != 'internal':
                 for objs in related_products_objs:
@@ -229,19 +226,17 @@ def sub_catproduct_info_logic(data):
         
         if district_id or state_id or org_id:
             if district_id:
-                products_obj = TblProducts.objects.filter(district = district_id, product_sub_category = sub_catid).all()
+                products_obj = TblProducts.objects.filter(district = district_id).all()
             
             elif state_id:
-                products_obj = TblProducts.objects.filter(state = state_id, product_sub_category = sub_catid).all()
+                products_obj = TblProducts.objects.filter(state = state_id).all()
             
             elif org_id:
-                products_obj = TblProducts.objects.filter(organization = org_id, product_sub_category = sub_catid).all()
+                products_obj = TblProducts.objects.filter(organization = org_id).all()
             
             if products_obj:
                 for obj in products_obj:
                     response = {}
-                    
-                    product_sub_category = TblSubcategories.objects.filter(id = int(obj.product_sub_category_id)).first()
                     
                     category = TblCategories.objects.filter(id = obj.__dict__['product_category_id']).first()
                     size_dict = obj.__dict__['size_available']
@@ -255,7 +250,6 @@ def sub_catproduct_info_logic(data):
                         "product_name"          : obj.__dict__['product_name'],
                         "product_category_id"   : category.categories_name if category else 'Global',
                         "product_category"      : category.categories_name if category else 'Global',
-                        "product_sub_category"  : product_sub_category.subcategories_name if product_sub_category else 'Global',
                         "size_available"        : json.loads(size_dict),
                         "product_image"         : products_images,
                         "price"                 : obj.__dict__['price'],
@@ -483,8 +477,6 @@ def search_functionality_logic(data):
             organization__org_name__icontains=search_string
         ) | Q(
             product_category__categories_name__icontains=search_string
-        ) | Q(
-            product_sub_category__subcategories_name__icontains=search_string
         )
         all_products = TblProducts.objects.filter(query).all()
         
@@ -574,7 +566,7 @@ def get_organizations(data):
         
         state_id = data['state'] if 'state' in data else None
         district_id = data['district'] if 'district' in data else None
-        subcat = data['sub_id'] if 'sub_id' in data else None
+        cat = data['cat_id'] if 'cat_id' in data else None
         
         if state_id and district_id:
             organization_objs = TblOrganization.objects.filter(state_id = state_id, district_id = district_id).all()
@@ -585,15 +577,15 @@ def get_organizations(data):
         elif district_id:
             organization_objs = TblOrganization.objects.filter(district_id = district_id).all()
             
-        # elif subcat:
-        #     organization_ids_obj = TblProducts.objects.filter(product_sub_category = subcat).values("organization").all()
-        #     organization_ids = []
-        #     if organization_ids_obj:
-        #         for ids in organization_ids_obj:
-        #             if ids['organization'] not in organization_ids and ids['organization']:
-        #                 organization_ids.append(ids['organization'])
+        elif cat:
+            organization_ids_obj = TblProducts.objects.filter(id = cat).values("organization").all()
+            organization_ids = []
+            if organization_ids_obj:
+                for ids in organization_ids_obj:
+                    if ids['organization'] not in organization_ids and ids['organization']:
+                        organization_ids.append(ids['organization'])
                         
-        #     organization_objs = TblOrganization.objects.filter(id__in=organization_ids).all()
+            organization_objs = TblOrganization.objects.filter(id__in=organization_ids).all()
                     
         if organization_objs:
             for obj in organization_objs:
