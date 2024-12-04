@@ -90,7 +90,7 @@ def handle_product_info(cat_id = None):
         products_obj = TblProducts.objects.filter(product_category = cat_id).all()[:6]
     else:
         products_obj = TblProducts.objects.select_related('product_category').filter(
-        product_category__categories_name='Uniforms'
+        product_category__categories_name='Global'
         )[:6]
     
     if products_obj:
