@@ -66,6 +66,7 @@ class TblProducts(models.Model):
     district = models.ForeignKey(TblDistrict, models.DO_NOTHING, db_column='district', blank=True, null=True)
     organization = models.ForeignKey(TblOrganization, models.DO_NOTHING, db_column='organization', blank=True, null=True)
     gst_percentage = models.CharField(max_length=100, blank=True, null=True)
+    rating = models.CharField(max_length=10, blank=True, null=True)
 
     class Meta:
         managed = False

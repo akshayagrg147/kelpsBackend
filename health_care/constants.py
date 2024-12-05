@@ -45,4 +45,6 @@ INITIATED_UPLOAD_IMAGES             = "Initaited the upload images api"
 
 INITIATED_GET_VERIFICATION          = "Initaited the gst verification api"
 
+UPDATE_RATING                       = "Initaited the update product api"
+
 ERROR_MESSAGE                       = "Invalid_Request"

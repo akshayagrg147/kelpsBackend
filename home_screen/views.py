@@ -1,7 +1,7 @@
 from rest_framework.decorators import api_view
 from health_care.response import JsendSuccessResponse
 from health_care import constants
-from .service import home_screen_logic, product_info_logic,sub_catproduct_info_logic, product_info_list_logic, address_insertion_logic, address_updation_logic, search_functionality_logic, get_states, get_district, get_organizations
+from .service import home_screen_logic, product_info_logic,sub_catproduct_info_logic, product_info_list_logic, address_insertion_logic, address_updation_logic, search_functionality_logic, get_states, get_district, get_organizations, rating_update_logic
 from admin_pages.services import get_category
 import json
 
@@ -150,6 +150,24 @@ def Category_info(request):
     category_id = data.get('category_id')
     
     status, response_data, message = get_category(category_id=category_id)
+    
+    return JsendSuccessResponse(status = status,data = response_data, message=message).get_response()
+
+@api_view(['POST'])
+def rating_update(request):
+    print(constants.BREAKCODE)
+    print(constants.UPDATE_RATING)
+    
+    data = request.body
+    if data:
+        data = data.decode("utf-8")
+        
+        data = json.loads(data)
+    
+    product_id = data.get('product_id')
+    rating = data.get('rating')
+    
+    status, response_data, message = rating_update_logic(product_id=product_id, rating=rating)
     
     return JsendSuccessResponse(status = status,data = response_data, message=message).get_response()
 

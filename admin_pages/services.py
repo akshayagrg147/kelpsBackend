@@ -593,7 +593,8 @@ def get_products(data):
                         "description"           : product_object.description,
                         "product_image"         : products_images,
                         "size_available"        : product_object.size_available,
-                        "gst_percentage"        : product_object.gst_percentage
+                        "gst_percentage"        : product_object.gst_percentage,
+                        "rating"                : product_object.rating
                         }
             
             final_response.append(response)
@@ -626,6 +627,7 @@ def add_products(user_id, data):
             state                   = obj.get('state')
             district                = obj.get('district')
             gst_percentage          = obj.get('gst_percentage')
+            rating                  = obj.get('rating')
             
             try:
                 if state:
@@ -683,6 +685,9 @@ def add_products(user_id, data):
                 if price:
                     query &= Q(price=price)
                     
+                if rating:
+                    query &= Q(rating=rating)
+                    
                 product_object = TblProducts.objects.filter(query).first()
 
                 product_images = []
@@ -707,6 +712,7 @@ def add_products(user_id, data):
                     product_object.updated_on           = datetime.datetime.now(datetime.timezone.utc)
                     product_object.updated_by           = user_id
                     product_object.gst_percentage       = gst_percentage
+                    product_object.rating               = rating
                 else:
                     # Create new product
                     print(f"Product created")
@@ -725,7 +731,8 @@ def add_products(user_id, data):
                         state               = state,
                         district            = district,
                         organization        = product_organization_obj,
-                        gst_percentage      = gst_percentage
+                        gst_percentage      = gst_percentage,
+                        rating              = rating
                     )
                 
                 product_object.save()
@@ -749,6 +756,7 @@ def add_products(user_id, data):
                         "product_image"         : products_images,
                         "size_available"        : json.loads(size_dict),
                         "gst_percentage"        : product_object.gst_percentage,
+                        "rating"                : product_object.rating
                         }
                 
                 final_response.append(response)
@@ -789,6 +797,9 @@ def update_products(data):
                 
             elif key == "price":
                 product_object.price = value
+                
+            elif key == "rating":
+                product_object.rating = value
                 
             elif key == "organization":
                 if value == "-1":
@@ -869,7 +880,8 @@ def update_products(data):
                     "description"           : product_object.description,
                     "product_image"         : products_images,
                     "size_available"        : json.loads(size_dict),
-                    "gst_percentage"        : product_object.gst_percentage
+                    "gst_percentage"        : product_object.gst_percentage,
+                    "rating"                : product_object.rating
                     }
         return True, response, "Product updated successfully"
         
@@ -940,7 +952,8 @@ def product_search_logic(data):
                 "size_available"        : json.loads(size_dict),
                 "product_image"         : products_images,
                 "price"                 : product.__dict__['price'],
-                "gst_percentage"        : product.gst_percentage
+                "gst_percentage"        : product.gst_percentage,
+                "rating"                : product.rating
             }
             
             if product.__dict__['district_id']:

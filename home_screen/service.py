@@ -115,7 +115,8 @@ def handle_product_info(cat_id = None):
                 "size_available"        : json.loads(size_dict),
                 "product_image"         : products_images,
                 "price"                 : obj.__dict__['price'],
-                "gst_percentage"        : obj.gst_percentage
+                "gst_percentage"        : obj.gst_percentage,
+                "rating"                : obj.rating
             }
             
             final_response.append(response)
@@ -160,7 +161,8 @@ def product_info_logic(product_id, flag = None):
                         'product_image'             : products_images,
                         'price'                     : objs.price,
                         'description'               : objs.description,
-                        "gst_percentage"            : objs.gst_percentage
+                        "gst_percentage"            : objs.gst_percentage,
+                        "rating"                    : objs.rating
                     })
             
             if product_obj:
@@ -184,6 +186,7 @@ def product_info_logic(product_id, flag = None):
                     final_response['price']                     = product_obj.price
                     final_response['description']               = product_obj.description
                     final_response['gst_percentage']            = product_obj.gst_percentage
+                    final_response['rating']                    = product_obj.rating
                     final_response['related_products']          = related_products
                 
                 else:
@@ -200,6 +203,7 @@ def product_info_logic(product_id, flag = None):
                     final_response['product_image']             = products_images
                     final_response['size_available']            = json.loads(size_dict)
                     final_response['gst_percentage']            = product_obj.gst_percentage
+                    final_response['rating']                    = product_obj.rating
             
         return 'Success', final_response, 'Product data fetched successfully'
             
@@ -253,7 +257,8 @@ def sub_catproduct_info_logic(data):
                         "size_available"        : json.loads(size_dict),
                         "product_image"         : products_images,
                         "price"                 : obj.__dict__['price'],
-                        "gst_percentage"        : obj.gst_percentage
+                        "gst_percentage"        : obj.gst_percentage,
+                        "rating"                : obj.rating
                     }
                     
                     if obj.__dict__['district_id']:
@@ -304,7 +309,8 @@ def sub_catproduct_info_logic(data):
                         "size_available"        : json.loads(size_dict),
                         "product_image"         : products_images,
                         "price"                 : obj.__dict__['price'],
-                        "gst_percentage"        : obj.gst_percentage
+                        "gst_percentage"        : obj.gst_percentage,
+                        "rating"                : obj.rating
                     }
                     
                     final_response.append(response)
@@ -502,7 +508,8 @@ def search_functionality_logic(data):
                 # "product_subcategory_name"  : product.product_sub_category.subcategories_name if product.product_sub_category else '',
                 "product_organization_id"   : product.organization.id if product.organization else '',
                 "product_organization_name" : product.organization.org_name if product.organization else '',       
-                "gst_percentage"            : product.gst_percentage,       
+                "gst_percentage"            : product.gst_percentage,    
+                "rating"                    : product.rating   
             }
             
             products_info.append(product)
@@ -605,6 +612,29 @@ def get_organizations(data):
         print(f"!!! ERROR !!! Error with the get_organizations :- {str(e)} ##################")
 
         return 'Error', None, str(e)
+    
+def rating_update_logic(product_id, rating):
+    try:
+        final_response = []
+        
+        productobj = TblProducts.objects.filter(id = product_id).first()
+        if productobj:
+            productobj.rating = str(rating)
+            productobj.size_available = json.dumps(productobj.size_available)
+            productobj.save()
+            return 'Success', None, "Rating updated successfully"
+        
+        else:
+            print("Product not found")
+            return 'Error', None, "Product not found"
+            
+        
+    except Exception as e:
+        print(constants.BREAKCODE)
+        print(f"!!! ERROR !!! Error while updating rating :- {str(e)} ##################")
+
+        return 'Error', None, str(e)
+    
 
 # def upload_images_logic(request):
 #     try:
