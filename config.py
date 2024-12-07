@@ -8,11 +8,11 @@ database_config = {
     'PORT'      : config('DB_PORT'),
 }
 
-# S3_config = {
-#     "AWS_ACCESS_KEY_ID"     : config('AWS_ACCESS_KEY_ID'),
-#     "AWS_SECRET_ACCESS_KEY" : config('AWS_SECRET_ACCESS_KEY'),
-#     "REGION_NAME"           : config('REGION_NAME'),
-# }
+S3_config = {
+    "AWS_ACCESS_KEY_ID"     : config('AWS_ACCESS_KEY_ID'),
+    "AWS_SECRET_ACCESS_KEY" : config('AWS_SECRET_ACCESS_KEY'),
+    "REGION_NAME"           : config('REGION_NAME'),
+}
 
 # razor_pay_config = {
 #     "RAZOR_PAY_KEY"       : config('RAZOR_PAY_KEY'),
