@@ -7,7 +7,7 @@ from django.core import serializers as json_serializer
 import json, ast
 import boto3
 from botocore.exceptions import NoCredentialsError
-# from config import S3_config
+from config import S3_config
 from django.db.models import Q
 
 
@@ -636,49 +636,49 @@ def rating_update_logic(product_id, rating):
         return 'Error', None, str(e)
     
 
-# def upload_images_logic(request):
-#     try:
-#         # Initialize S3 client with your AWS credentials
-#         print(f"Under upload_images function with S3_config")
-#         print(f"S3_config :- {S3_config}")
-#         s3_client = boto3.client(
-#             's3', 
-#             aws_access_key_id       = S3_config['AWS_ACCESS_KEY_ID'], 
-#             aws_secret_access_key   = S3_config['AWS_SECRET_ACCESS_KEY'],
-#             region_name             = S3_config['REGION_NAME']
-#         )
+def upload_images_logic(request):
+    try:
+        # Initialize S3 client with your AWS credentials
+        print(f"Under upload_images function with S3_config")
+        print(f"S3_config :- {S3_config}")
+        s3_client = boto3.client(
+            's3', 
+            aws_access_key_id       = S3_config['AWS_ACCESS_KEY_ID'], 
+            aws_secret_access_key   = S3_config['AWS_SECRET_ACCESS_KEY'],
+            region_name             = S3_config['REGION_NAME']
+        )
         
-#         bucket_name = "health_care-ecommerce-bucket"
+        bucket_name = "kelpshealth"
 
-#         # Extract the image and mime_type from the form data
-#         mime_type = request.data.get('mime_type')
-#         image = request.FILES.get('photo_dec')
-#         image_name = request.data.get('image_name')
+        # Extract the image and mime_type from the form data
+        mime_type = request.data.get('mime_type')
+        image = request.FILES.get('photo_dec')
+        image_name = request.data.get('image_name')
         
-#         if not mime_type or not image:
-#             return 'Error', None, "Missing 'mime_type' or 'photo_dec' field"
+        if not mime_type or not image:
+            return 'Error', None, "Missing 'mime_type' or 'photo_dec' field"
 
-#         # Create the file name
-#         pic_name = f"{image_name}.{mime_type}"
+        # Create the file name
+        pic_name = f"{image_name}.{mime_type}"
 
-#         # Upload to S3
-#         s3_client.upload_fileobj(
-#             image, 
-#             bucket_name, 
-#             pic_name, 
-#             ExtraArgs={"ContentType": f"image/{mime_type}"}
-#         )
+        # Upload to S3
+        s3_client.upload_fileobj(
+            image, 
+            bucket_name, 
+            pic_name, 
+            ExtraArgs={"ContentType": f"image/{mime_type}"}
+        )
         
-#         # Generate the file URL
-#         file_url = f"https://{bucket_name}.s3.amazonaws.com/{pic_name}"
+        # Generate the file URL
+        file_url = f"https://{bucket_name}.s3.amazonaws.com/{pic_name}"
         
-#         return 'Success', {"file_url": file_url}, "File uploaded successfully"
+        return 'Success', {"file_url": file_url}, "File uploaded successfully"
     
-#     except NoCredentialsError:
-#         return 'Error', None, "Credentials not available"
+    except NoCredentialsError:
+        return 'Error', None, "Credentials not available"
 
-#     except Exception as e:
-#         return 'Error', None, str(e)
+    except Exception as e:
+        return 'Error', None, str(e)
     
     
     

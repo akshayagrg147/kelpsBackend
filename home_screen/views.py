@@ -1,7 +1,7 @@
 from rest_framework.decorators import api_view
 from health_care.response import JsendSuccessResponse
 from health_care import constants
-from .service import home_screen_logic, product_info_logic,sub_catproduct_info_logic, product_info_list_logic, address_insertion_logic, address_updation_logic, search_functionality_logic, get_states, get_district, get_organizations, rating_update_logic
+from .service import home_screen_logic, product_info_logic,sub_catproduct_info_logic, product_info_list_logic, address_insertion_logic, address_updation_logic, search_functionality_logic, get_states, get_district, get_organizations, rating_update_logic, upload_images_logic
 from admin_pages.services import get_category
 import json
 
@@ -130,14 +130,14 @@ def get_organizations_logic(request):
     
     return JsendSuccessResponse(status = status,data = response_data, message=message).get_response()
 
-# @api_view(['POST'])
-# def upload_image(request):
-#     print(constants.BREAKCODE)
-#     print(constants.INITIATED_UPLOAD_IMAGES)
+@api_view(['POST'])
+def upload_image(request):
+    print(constants.BREAKCODE)
+    print(constants.INITIATED_UPLOAD_IMAGES)
     
-#     status, response_data, message = upload_images_logic(request)
+    status, response_data, message = upload_images_logic(request)
     
-#     return JsendSuccessResponse(status = status,data = response_data, message=message).get_response()
+    return JsendSuccessResponse(status = status,data = response_data, message=message).get_response()
 
 
 @api_view(['GET'])
