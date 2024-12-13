@@ -141,7 +141,7 @@ def product_info_logic(product_id, flag = None):
             if flag != 'internal':
                 for objs in related_products_objs:
                     size_dict = objs.__dict__['size_available']
-                    size_dict = json.dumps(size_dict)
+                    size_dict = json.loads(size_dict)
                     product_category = TblCategories.objects.filter(id = int(objs.product_category_id)).first()
                     # product_sub_category = TblSubcategories.objects.filter(id = int(objs.product_sub_category_id)).first()
                     images_list = ast.literal_eval(objs.__dict__['product_image'])
@@ -157,7 +157,7 @@ def product_info_logic(product_id, flag = None):
                         # 'product_sub_category'      : product_sub_category.subcategories_name if product_sub_category else "",
                         'product_organization_id'   : objs.organization.id if objs.organization else '',
                         'product_organization'      : objs.organization.org_name if objs.organization else '',
-                        'size_available'            : json.loads(size_dict),
+                        'size_available'            : size_dict,
                         'product_image'             : products_images,
                         'price'                     : objs.price,
                         'description'               : objs.description,
@@ -167,7 +167,7 @@ def product_info_logic(product_id, flag = None):
             
             if product_obj:
                 size_dict = product_obj.__dict__['size_available']
-                size_dict = json.dumps(size_dict)
+                size_dict = json.loads(size_dict)
                 images_list = ast.literal_eval(product_obj.product_image)
                 products_images = {}
                 for i in range(len(images_list)):
@@ -181,7 +181,7 @@ def product_info_logic(product_id, flag = None):
                     final_response['product_category']          = product_category.categories_name
                     # final_response['product_sub_category']      = product_sub_category.subcategories_name
                     final_response['product_organization']      = product_obj.organization.org_name if product_obj.organization else ''
-                    final_response['size_available']            = json.loads(size_dict)
+                    final_response['size_available']            = size_dict
                     final_response['product_image']             = products_images
                     final_response['price']                     = product_obj.price
                     final_response['description']               = product_obj.description
@@ -201,7 +201,7 @@ def product_info_logic(product_id, flag = None):
                     final_response['price']                     = product_obj.price
                     final_response['description']               = product_obj.description
                     final_response['product_image']             = products_images
-                    final_response['size_available']            = json.loads(size_dict)
+                    final_response['size_available']            = size_dict
                     final_response['gst_percentage']            = product_obj.gst_percentage
                     final_response['rating']                    = product_obj.rating
             

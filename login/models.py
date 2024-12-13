@@ -2,12 +2,14 @@ from django.db import models
 from home_screen.models import TblAddress
 
 
+
+
 class TblUser(models.Model):
     email = models.CharField(max_length=255)
     full_name = models.CharField(max_length=75)
     password = models.CharField(max_length=255)
     salt_key = models.CharField(max_length=255)
-    user_type = models.IntegerField()
+    user_type = models.IntegerField(blank=True, null=True)
     state = models.CharField(max_length=30)
     district = models.CharField(max_length=30)
     created_on = models.DateTimeField()

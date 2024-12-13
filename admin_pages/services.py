@@ -592,7 +592,7 @@ def get_products(data):
                         "price"                 : product_object.price,
                         "description"           : product_object.description,
                         "product_image"         : products_images,
-                        "size_available"        : product_object.size_available,
+                        "size_available"        : json.loads(product_object.size_available),
                         "gst_percentage"        : product_object.gst_percentage,
                         "rating"                : product_object.rating
                         }
@@ -671,13 +671,13 @@ def add_products(user_id, data):
                     query &= Q(product_sub_category=product_sub_category)
 
                 if product_organization:
-                    query &= Q(organization=product_organization)
+                    query &= Q(organization_id=product_organization)
                     
                 if state:
-                    query &= Q(state=state)
+                    query &= Q(state_id=state)
                     
                 if district:
-                    query &= Q(district=district)
+                    query &= Q(district_id=district)
                     
                 if size:
                     query &= Q(size_available__contains={'size': size})
@@ -857,7 +857,6 @@ def update_products(data):
                 product_object.gst_percentage = value 
             
         product_object.updated_by = data.get('user_id')
-        product_object.size_available = json.dumps(product_object.size_available)
         product_object.save()
         
         products_images = {}
@@ -879,7 +878,7 @@ def update_products(data):
                     "price"                 : product_object.price,
                     "description"           : product_object.description,
                     "product_image"         : products_images,
-                    "size_available"        : json.loads(size_dict),
+                    "size_available"        : json.loads(size_dict) if size_dict else {},
                     "gst_percentage"        : product_object.gst_percentage,
                     "rating"                : product_object.rating
                     }
@@ -937,7 +936,6 @@ def product_search_logic(data):
         
         for product in products_obj:
             size_dict = product.__dict__['size_available']
-            size_dict = json.dumps(size_dict)
             images_list = ast.literal_eval(product.__dict__['product_image'])
             products_images = {}
             for i in range(len(images_list)):
