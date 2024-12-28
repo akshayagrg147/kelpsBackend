@@ -1,13 +1,17 @@
 from .models import TblOrder
 from login.models import TblUser
-from home_screen.models import TblAddress, TblProducts, TblCategories
+from home_screen.models import TblAddress, TblProducts, TblCategories, TblOrganization
 from health_care import api_serializer
 from home_screen.service import product_info_logic
 from django.core import serializers as json_serializer
 import ast, datetime, json, math
 from dateutil.tz import gettz
+from django.db.models import Q
 import razorpay
 from razorpay.errors import SignatureVerificationError
+from health_care.constants import month_mapping
+from collections import defaultdict
+
 # from config import razor_pay_config
 
 # client = razorpay.Client(auth=(razor_pay_config['RAZOR_PAY_KEY'], razor_pay_config['RAZOR_PAY_SECRET']))
@@ -715,3 +719,441 @@ def verify_payment_signature(order_id, razorpay_payment_id, razorpay_signature):
         return True
     except SignatureVerificationError:
         return False
+    
+def total_revenue_logic(data):
+    total_profit = 0.0
+    
+    # Extract or set default order status
+    order_status = data['status'] if 'status' in data else None
+    category_id = data.get('category_id')
+    sub_category_id = data.get('sub_category_id')
+    organization_id = data.get('organization_id')
+    
+    query = Q()
+
+    # Add the order status filter if it exists
+    if order_status:
+        query &= Q(order_status=order_status)
+
+    # Add category-related filters
+    if category_id:
+        category_obj = TblCategories.objects.filter(id=category_id).first()
+        if category_obj:
+            category_name = category_obj.categories_name
+            query &= Q(order_details__icontains=category_name) | Q(order_details__icontains=str(category_id))
+
+    # Add organization-related filters
+    if organization_id:
+        organization_obj = TblOrganization.objects.filter(id=organization_id).first()
+        if organization_obj:
+            organization_name = organization_obj.org_name
+            query &= Q(order_details__icontains=organization_name) | Q(order_details__icontains=str(organization_id))
+    
+    if query:
+        order_objs = TblOrder.objects.filter(query).all()
+    
+    else:
+        order_objs = TblOrder.objects.all()
+
+    for order in order_objs:
+        total_profit += float(order.price)
+        
+    total_profit = total_profit
+    
+    return total_profit
+    
+
+def admin_order_list_logic(data):
+    try:
+        user_id = data['user_id'] if 'user_id' in data else None
+        if not user_id:
+            print("User can't be none")
+            raise ValueError("User can't be none")
+        
+        user_obj = TblUser.objects.filter(id = user_id).first()
+        if not user_obj:
+            raise ValueError("No user found")
+        
+        order_status = data['status'] if 'status' in data else None
+        category_id = data.get('category_id')
+        sub_category_id = data.get('sub_category_id')
+        organization_id = data.get('organization_id')
+        
+        query = Q()
+
+        # Add the order status filter if it exists
+        if order_status:
+            query &= Q(order_status=order_status)
+
+        # Add category-related filters
+        if category_id:
+            category_obj = TblCategories.objects.filter(id=category_id).first()
+            if category_obj:
+                category_name = category_obj.categories_name
+                query &= Q(order_details__icontains=category_name) | Q(order_details__icontains=str(category_id))
+
+        # Add organization-related filters
+        if organization_id:
+            organization_obj = TblOrganization.objects.filter(id=organization_id).first()
+            if organization_obj:
+                organization_name = organization_obj.org_name
+                query &= Q(order_details__icontains=organization_name) | Q(order_details__icontains=str(organization_id))
+        
+        if query:
+            orders_objs = TblOrder.objects.filter(query).order_by('-created_on')
+        
+        else:
+            orders_objs = TblOrder.objects.all().order_by('-created_on')
+        
+        # Get all the products status details 
+        placed = 0
+        dispatched = 0
+        delievered = 0
+        returned = 0
+        pending = 0
+        
+        for orders in orders_objs:
+            if orders.order_status == 'Pending':
+                pending +=1 
+            
+            elif orders.order_status == 'Placed':
+                placed +=1 
+                
+            elif orders.order_status == 'Dispatched':
+                dispatched +=1 
+                
+            elif orders.order_status == 'Delievered':
+                delievered +=1 
+                
+            elif orders.order_status == 'Returned':
+                returned +=1 
+         
+        # Get the total revenue    
+        total_revenue = total_revenue_logic(data)
+        
+        # Get the Total customers
+        total_customers = TblUser.objects.filter(user_type = 0).count()
+        
+        # Get the total products
+        total_products = TblProducts.objects.count()
+        
+        # Get the total vendors
+        total_vendors = TblOrganization.objects.count()
+        
+        # Get the latest 10 orders
+        latest_orders = []
+        range_value = len(orders_objs) if len(orders_objs) <=10 else 10
+        for i in range(range_value):
+            user_obj = TblUser.objects.filter(id = orders_objs[i].user_id).first()
+            
+            address_obj = TblAddress.objects.filter(user_id = orders_objs[i].user_id).first()
+            latest_orders.append({
+                "order_id"          : orders_objs[i].id,
+                "date"              : (orders_objs[i].created_on).strftime('%Y-%m-%d'),
+                "time"              : (orders_objs[i].created_on).strftime('%I:%M %p'),
+                "customer_name"     : user_obj.full_name if user_obj else "",
+                "contact_number"    : address_obj.phone_number if address_obj else " ",
+                "item_quantity"     : orders_objs[i].product_quantity,
+                "price"             : orders_objs[i].price,
+                "status"            : orders_objs[i].order_status
+            })  
+            
+        response = {
+            "Placed"         : placed,
+            "Dispatched"     : dispatched,
+            "Delievered"     : delievered,
+            "Returned"       : returned,
+            "Pending"        : pending,
+            "total_revenue"         : total_revenue,
+            "total_customers"       : total_customers,
+            "total_products"        : total_products,
+            "total_vendors"         : total_vendors,
+            "latest_orders"         : latest_orders
+        }
+        
+        return True, response, "Order list fetch successfully"
+        
+    
+    except ValueError as ve:
+        print(f"Error at order list api {str(ve)}")
+        return False,  None, str(ve)
+    
+    except Exception as e:
+        print(f"Error at order list api {str(e)}")
+        return False,  None, str(e)
+
+
+def sales_overview_data_logic(data):
+    try:
+        final_response = {}
+        total_profit = 0.0
+        total_sale = 0.0
+
+        user_id = data.get('user_id')
+        if not user_id:
+            raise ValueError("User can't be none")
+        
+        flag = data.get('flag')
+        if flag == "weekly":
+            week    = int(data.get('week'))
+            month   = int(data.get('month'))
+            year    = int(data.get('year'))
+            start_date, end_date = get_week_date_range(year, month, week)
+            order_objs = TblOrder.objects.filter(created_on__date__range=(start_date, end_date))
+            
+            
+        elif flag == "monthly":
+            year    = data.get('year')
+            order_objs = TblOrder.objects.filter(created_on__year=year).all()
+            
+        elif flag == "yearly":
+            order_objs = TblOrder.objects.all()
+        
+        user_obj = TblUser.objects.filter(id=user_id).first()
+        if not user_obj:
+            raise ValueError("No user found")
+
+        statistics = {}
+        for order in order_objs:
+            if flag == "weekly":
+                date_key = order.created_on.astimezone(gettz('Asia/Kolkata')).strftime("%Y-%m-%d") if order.created_on else ''
+            
+            elif flag == "monthly":
+                date_key = order.created_on.month if order.created_on else ''
+                date_key = month_mapping[date_key]
+                
+                
+            elif flag == "yearly":
+                date_key = order.created_on.year if order.created_on else ''
+            
+                            
+            total_profit += float(order.price)
+            
+            if date_key not in statistics:
+                statistics[date_key] = 0.0
+            
+            statistics[date_key] += float(order.price)
+            
+        
+        total_sale = len(order_objs)
+        total_profit = total_profit
+            
+        # Prepare the final response
+        final_response = {
+            "Total Sale"    : total_sale,
+            "Total Profit"  : total_profit,
+            "statistics"    : statistics
+        }
+        
+        return True, final_response, "Order stats fetched successfully"
+    
+    except ValueError as ve:
+        print(f"Error at order stats api: {str(ve)}")
+        return False, None, str(ve)
+    
+    except Exception as e:
+        print(f"Error at order stats api: {str(e)}")
+        return False, None, str(e)
+
+def get_week_date_range(year, month, week):
+    first_day_of_month = datetime.datetime(year, month, 1)
+    first_day_weekday = first_day_of_month.weekday()
+    
+    # Calculate the start of the first week (offset if the month starts mid-week)
+    start_date = first_day_of_month - datetime.timedelta(days=first_day_weekday)
+    start_date += datetime.timedelta(weeks=week - 1)
+    
+    # Calculate the end date of the week
+    end_date = start_date + datetime.timedelta(days=6)
+    
+    # Ensure the end_date does not exceed the month
+    if end_date.month != month:
+        end_date = datetime.datetime(year, month + 1, 1) - datetime.timedelta(days=1)
+    
+    return start_date.date(), end_date.date()
+
+
+def order_status_wise_data_logic(data):
+    try:
+        user_id = data['user_id'] if 'user_id' in data else None
+        if not user_id:
+            print("User can't be none")
+            raise ValueError("User can't be none")
+        
+        user_obj = TblUser.objects.filter(id = user_id).first()
+        if not user_obj:
+            raise ValueError("No user found")
+        
+        order_status = data['status'] if 'status' in data else None
+        category_id = data.get('category_id')
+        sub_category_id = data.get('sub_category_id')
+        organization_id = data.get('organization_id')
+        flag = data.get('flag')
+        
+        query = Q()
+
+        # Add the order status filter if it exists
+        if order_status:
+            if ',' in order_status:
+                order_status = order_status.split(',')
+                
+            if isinstance(order_status, (list, tuple)):
+                query &= Q(order_status__in=order_status)  
+            else:
+                query &= Q(order_status=order_status)
+
+        # Add category-related filters
+        if category_id:
+            category_obj = TblCategories.objects.filter(id=category_id).first()
+            if category_obj:
+                category_name = category_obj.categories_name
+                query &= Q(order_details__icontains=category_name) | Q(order_details__icontains=str(category_id))
+
+        # Add organization-related filters
+        if organization_id:
+            organization_obj = TblOrganization.objects.filter(id=organization_id).first()
+            if organization_obj:
+                organization_name = organization_obj.org_name
+                query &= Q(order_details__icontains=organization_name) | Q(order_details__icontains=str(organization_id))
+                
+        if flag == "monthly":
+            year    = data.get('year')
+            query &= Q(created_on__year=year)
+        
+        if query:
+            orders_objs = TblOrder.objects.filter(query).order_by('-created_on')
+        
+        else:
+            orders_objs = TblOrder.objects.all().order_by('-created_on')
+        
+        # Get all the products status details 
+        status_map = {"Placed" : 0, "Dispatched" : 0, "Delievered" : 0, "Returned" : 0, "Pending" : 0}
+        
+        statistics = defaultdict(lambda: defaultdict(int))
+
+        for order in orders_objs:
+            if not order.created_on:
+                continue  # Skip orders without a valid creation date
+
+            # Determine the date key based on the flag
+            if flag == "monthly":
+                date_key = month_mapping.get(order.created_on.month, '')
+            elif flag == "yearly":
+                date_key = order.created_on.year
+            else:
+                continue  # Skip if the flag is not recognized
+
+            if order_status:
+                if isinstance(order_status, list):
+                    for status in order_status:
+                        statistics[date_key][status] += 1 if order.order_status == status else 0 
+                else:
+                     statistics[date_key][order_status] += 1 if order.order_status == order_status else 0 
+            
+            else:
+                statistics[date_key]['Placed'] += 1 if order.order_status == 'Placed' else 0
+                statistics[date_key]['Dispatched'] += 1 if order.order_status == 'Dispatched' else 0
+                statistics[date_key]['Delievered'] += 1 if order.order_status == 'Delievered' else 0
+                statistics[date_key]['Returned'] += 1 if order.order_status == 'Returned' else 0
+                statistics[date_key]['Pending'] += 1 if order.order_status == 'Pending' else 0
+        
+        return True, statistics, "Order stats fetched successfully"
+    
+    except ValueError as ve:
+        print(f"Error at order_status_wise_data_logic api: {str(ve)}")
+        return False, None, str(ve)
+    
+    except Exception as e:
+        print(f"Error at order_status_wise_data_logic api: {str(e)}")
+        return False, None, str(e)
+
+
+def order_by_status_data_logic(data):
+    try:
+        user_id = data['user_id'] if 'user_id' in data else None
+        if not user_id:
+            print("User can't be none")
+            raise ValueError("User can't be none")
+        
+        user_obj = TblUser.objects.filter(id = user_id).first()
+        if not user_obj:
+            raise ValueError("No user found")
+        
+        order_status = data['status'] if 'status' in data else None
+        category_id = data.get('category_id')
+        sub_category_id = data.get('sub_category_id')
+        organization_id = data.get('organization_id')
+        
+        from_date = data.get('from')
+        to_date = data.get('to')
+        
+        query = Q()
+        if from_date and to_date:
+            query = Q(created_on__gt=from_date) & Q(created_on__lt=to_date)
+
+        if order_status:
+            query &= Q(order_status=order_status)
+
+        if category_id:
+            category_obj = TblCategories.objects.filter(id=category_id).first()
+            if category_obj:
+                category_name = category_obj.categories_name
+                query &= Q(order_details__icontains=category_name) | Q(order_details__icontains=str(category_id))
+
+        if organization_id:
+            organization_obj = TblOrganization.objects.filter(id=organization_id).first()
+            if organization_obj:
+                organization_name = organization_obj.org_name
+                query &= Q(order_details__icontains=organization_name) | Q(order_details__icontains=str(organization_id))
+        
+        if query:
+            orders_objs = TblOrder.objects.filter(query).order_by('-created_on')
+        
+        else:
+            orders_objs = TblOrder.objects.all().order_by('-created_on')
+            
+        
+        
+        # Get all the products status details 
+        placed = 0
+        dispatched = 0
+        delievered = 0
+        returned = 0
+        pending = 0
+        
+        for orders in orders_objs:
+            if orders.order_status == 'Pending':
+                pending +=1 
+            
+            elif orders.order_status == 'Placed':
+                placed +=1 
+                
+            elif orders.order_status == 'Dispatched':
+                dispatched +=1 
+                
+            elif orders.order_status == 'Delievered':
+                delievered +=1 
+                
+            elif orders.order_status == 'Returned':
+                returned +=1 
+                
+        response = {
+            "Placed"         : placed,
+            "Dispatched"     : dispatched,
+            "Delievered"     : delievered,
+            "Returned"       : returned,
+            "Pending"        : pending,
+        }
+        
+        return True, response, "Order status fetch successfully"
+        
+    
+    except ValueError as ve:
+        print(f"Error at order_by_status_data_logic api: {str(ve)}")
+        return False, None, str(ve)
+    
+    except Exception as e:
+        print(f"Error at order_by_status_data_logic api: {str(e)}")
+        return False, None, str(e)
+
+

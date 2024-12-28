@@ -2,7 +2,7 @@ from django.shortcuts import render
 from rest_framework.decorators import api_view
 from health_care.response import JsendSuccessResponse
 from health_care import constants
-from order.service import order_history_logic, order_place_logic, order_details_logic, order_status_update_logic, order_list_logic, order_stats_logic, order_search_logic, verify_payment_logic
+from order.service import order_history_logic, order_place_logic, order_details_logic, order_status_update_logic, order_list_logic, order_stats_logic, order_search_logic, verify_payment_logic, admin_order_list_logic, sales_overview_data_logic, order_status_wise_data_logic, order_by_status_data_logic
 
 # Create your views here.
 @api_view(['GET'])
@@ -93,4 +93,49 @@ def verify_payment(request):
     status, response_data, message = verify_payment_logic(request)
     
     return JsendSuccessResponse(status = status,data = response_data, message=message).get_response()
+
+@api_view(['GET'])
+def admin_orders_details(request):
+    print(constants.BREAKCODE)
+    print(constants.INITAITED_ADMIN_ORDER_LIST_API)
     
+    data = request.query_params
+    
+    status, response_data, message = admin_order_list_logic(data)
+    
+    return JsendSuccessResponse(status = status,data = response_data, message=message).get_response()
+
+@api_view(['GET'])
+def sales_overview_logic(request):
+    print(constants.BREAKCODE)
+    print(constants.INITAITED_SALES_OVERVIEW_API)
+    
+    data = request.query_params
+    
+    status, response_data, message = sales_overview_data_logic(data)
+    
+    return JsendSuccessResponse(status = status,data = response_data, message=message).get_response()
+
+
+@api_view(['GET'])
+def order_status_wise_logic(request):
+    print(constants.BREAKCODE)
+    print(constants.INITAITED_ORDER_STATUS_WISE_API)
+    
+    data = request.query_params
+    
+    status, response_data, message = order_status_wise_data_logic(data)
+    
+    return JsendSuccessResponse(status = status,data = response_data, message=message).get_response()
+
+@api_view(['GET'])
+def order_by_status_logic(request):
+    print(constants.BREAKCODE)
+    print(constants.INITAITED_ORDER_BY_STATUS_API)
+    
+    data = request.query_params
+    
+    status, response_data, message = order_by_status_data_logic(data)
+    
+    return JsendSuccessResponse(status = status,data = response_data, message=message).get_response()
+
